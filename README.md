@@ -1,2 +1,0 @@
-# PruebaAether
-Prueba Técnica
