@@ -1,17 +1,16 @@
 import express from 'express';
 import cors from 'cors';
-import { contactRoutes } from './routes/contactRoutes'; // Importación corregida
+import { contactRoutes } from './routes/contactRoutes';
 
 const app = express();
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Rutas
-app.use('/api/contacts', contactRoutes); // ¡Esta línea es crucial!
+// ¡ESTA LÍNEA ES CRUCIAL!
+app.use('/api/contacts', contactRoutes);
 
-// Ruta de salud para probar que funciona
+// Ruta de salud para probar
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'OK', message: 'API funcionando correctamente' });
 });

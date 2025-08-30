@@ -7,44 +7,109 @@ interface OperationModalProps {
   onCancel: () => void;
 }
 
-export default function OperationModal({ contact, onSubmit, onCancel }: OperationModalProps) {
+const OperationModal: React.FC<OperationModalProps> = ({
+  contact,
+  onSubmit,
+  onCancel
+}) => {
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<'credit' | 'debit'>('credit');
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(type, parseFloat(amount));
+    setError('');
+    setSuccessMessage('');
+
+    const numericAmount = parseFloat(amount);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      setError('El monto debe ser un número positivo');
+      return;
+    }
+
+    if (type === 'debit' && numericAmount > contact.balance) {
+      setError('Fondos insuficientes');
+      return;
+    }
+
+    setSuccessMessage(
+      type === 'credit' 
+        ? `¡Ingreso de $${numericAmount.toFixed(2)} realizado con éxito!`
+        : `¡Retiro de $${numericAmount.toFixed(2)} realizado con éxito!`
+    );
+
+    // Ejecutamos la operación normalmente
+    onSubmit(type, numericAmount);
+  };
+
+  const calculateNewBalance = () => {
+    const numericAmount = parseFloat(amount);
+    if (isNaN(numericAmount)) return contact.balance;
+
+    return type === 'credit'
+      ? contact.balance + numericAmount
+      : contact.balance - numericAmount;
   };
 
   return (
-    <div className="modal">
-      <div className="modal-content">
+    <div className="modal-overlay">
+      <div className="modal">
         <h2>Operación para {contact.name}</h2>
-        <p>Balance actual: ${contact.balance}</p>
-        <form onSubmit={handleSubmit}>
-          <div>
-            <label>Tipo:</label>
-            <select value={type} onChange={(e) => setType(e.target.value as 'credit' | 'debit')}>
-              <option value="credit">Crédito (+)</option>
-              <option value="debit">Débito (-)</option>
+
+        <div className="balance-info">
+          <p><strong>Balance actual:</strong> ${contact.balance.toFixed(2)}</p>
+          <p><strong>Nuevo balance:</strong> ${calculateNewBalance().toFixed(2)}</p>
+        </div>
+
+        {/* Mensaje de éxito */}
+        {successMessage && (
+          <div className="success-message">
+            {successMessage}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="form">
+          <div className="form-group">
+            <label>Tipo de operación:</label>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value as 'credit' | 'debit')}
+              className="form-select"
+            >
+              <option value="credit">Ingreso (+)</option>
+              <option value="debit">Retiro (-)</option>
             </select>
           </div>
-          <div>
+
+          <div className="form-group">
             <label>Monto:</label>
             <input
               type="number"
               step="0.01"
+              min="0.01"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.00"
               required
+              className="form-input"
             />
           </div>
-          <div className="modal-actions">
-            <button type="button" onClick={onCancel}>Cancelar</button>
-            <button type="submit">Ejecutar</button>
+
+          {error && <div className="error-message">{error}</div>}
+
+          <div className="form-actions">
+            <button type="button" onClick={onCancel} className="btn btn-secondary">
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn-primary">
+              Ejecutar Operación
+            </button>
           </div>
         </form>
       </div>
     </div>
   );
-}
+};
+
+export default OperationModal;

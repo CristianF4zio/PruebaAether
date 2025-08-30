@@ -10,8 +10,9 @@ export interface Contact {
 export interface Operation {
   _id: string;
   contactId: string;
-  type: 'add' | 'subtract';
+  type: 'credit' | 'debit';  
   amount: number;
   description?: string;
+  balanceAfter: number;      
   createdAt: string;
 }

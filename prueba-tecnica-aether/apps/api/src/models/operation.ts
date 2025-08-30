@@ -2,10 +2,11 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IOperation extends Document {
   contact: mongoose.Types.ObjectId;
-  type: 'credit' | 'debit';
+  type: 'credit' | 'debit'; // ← Cambiar a credit/debit
   amount: number;
   balanceAfter: number;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 const OperationSchema: Schema = new Schema({
@@ -16,13 +17,12 @@ const OperationSchema: Schema = new Schema({
   },
   type: { 
     type: String, 
-    enum: ['credit', 'debit'], 
+    enum: ['credit', 'debit'], // ← Cambiar a credit/debit
     required: true 
   },
   amount: { 
     type: Number, 
-    required: true, 
-    min: 0 
+    required: true
   },
   balanceAfter: { 
     type: Number, 

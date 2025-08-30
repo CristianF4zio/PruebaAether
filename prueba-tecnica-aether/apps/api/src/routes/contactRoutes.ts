@@ -7,53 +7,113 @@ const router = Router();
 
 // 1. GET /api/contacts  – listar todos
 router.get('/', async (_req, res) => {
-  const contacts = await Contact.find().sort({ createdAt: -1 });
-  res.json(contacts);
+  try {
+    const contacts = await Contact.find().sort({ createdAt: -1 });
+    res.json(contacts);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener contactos' });
+  }
 });
 
 // 2. POST /api/contacts – crear contacto
 router.post('/', async (req, res) => {
-  const { email, name } = req.body;
-  const contact = await Contact.create({ email, name, balance: 0 });
-  res.status(201).json(contact);
+  try {
+    const { email, name } = req.body;
+    
+    // Validar que el email no exista
+    const existingContact = await Contact.findOne({ email });
+    if (existingContact) {
+      return res.status(400).json({ error: 'El email ya está registrado' });
+    }
+
+    const contact = await Contact.create({ email, name, balance: 0 });
+    res.status(201).json(contact);
+  } catch (error: any) {
+    if (error.code === 11000) {
+      res.status(400).json({ error: 'El email ya está registrado' });
+    } else {
+      res.status(500).json({ error: 'Error al crear contacto' });
+    }
+  }
 });
 
 // 3. PATCH /api/contacts/:id – editar solo nombre
 router.patch('/:id', async (req, res) => {
-  const { name } = req.body;
-  const contact = await Contact.findByIdAndUpdate(
-    req.params.id,
-    { name },
-    { new: true }
-  );
-  res.json(contact);
+  try {
+    const { name } = req.body;
+    const contact = await Contact.findByIdAndUpdate(
+      req.params.id,
+      { name },
+      { new: true, runValidators: true }
+    );
+    
+    if (!contact) {
+      return res.status(404).json({ error: 'Contacto no encontrado' });
+    }
+    
+    res.json(contact);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al actualizar contacto' });
+  }
 });
 
 // 4. GET /api/contacts/:id – perfil completo
 router.get('/:id', async (req, res) => {
-  const contact = await Contact.findById(req.params.id);
-  if (!contact) return res.status(404).send('Contacto no encontrado');
-  res.json(contact);
+  try {
+    const contact = await Contact.findById(req.params.id);
+    if (!contact) {
+      return res.status(404).json({ error: 'Contacto no encontrado' });
+    }
+    res.json(contact);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener contacto' });
+  }
 });
 
 // 5. POST /api/contacts/:id/operations – crédito/débito (transacción atómica)
 router.post('/:id/operations', async (req, res) => {
   const { type, amount } = req.body;
+  
+  // Validar que el tipo sea correcto
+  if (type !== 'credit' && type !== 'debit') {
+    return res.status(400).json({ error: 'Tipo de operación inválido. Use "credit" o "debit"' });
+  }
+  
+  // Validar que el monto sea positivo
+  if (amount <= 0) {
+    return res.status(400).json({ error: 'El monto debe ser mayor a 0' });
+  }
+
   const session = await startSession();
   session.startTransaction();
+  
   try {
     const contact = await Contact.findById(req.params.id).session(session);
-    if (!contact) throw new Error('Contacto no encontrado');
+    if (!contact) {
+      throw new Error('Contacto no encontrado');
+    }
 
-    const change = type === 'credit' ? amount : -amount;
+    // Lógica correcta para credit/debit
+    const numericAmount = parseFloat(amount);
+    const change = type === 'credit' ? numericAmount : -numericAmount;
     const newBalance = contact.balance + change;
-    if (newBalance < 0) throw new Error('Fondos insuficientes');
+    
+    // Validar fondos suficientes para débitos
+    if (newBalance < 0) {
+      throw new Error('Fondos insuficientes para realizar el retiro');
+    }
 
     const [op] = await Operation.create(
-      [{ contact: contact._id, type, amount, balanceAfter: newBalance }],
+      [{ 
+        contact: contact._id, 
+        type, 
+        amount: change,
+        balanceAfter: newBalance 
+      }],
       { session }
     );
 
+    // Actualizar balance del contacto
     contact.balance = newBalance;
     await contact.save({ session });
 
@@ -69,30 +129,93 @@ router.post('/:id/operations', async (req, res) => {
 
 // 6. GET /api/contacts/:id/operations – historial
 router.get('/:id/operations', async (req, res) => {
-  const ops = await Operation.find({ contact: req.params.id })
-    .sort({ createdAt: -1 });
-  res.json(ops);
+  try {
+    // Verificar que el contacto existe
+    const contact = await Contact.findById(req.params.id);
+    if (!contact) {
+      return res.status(404).json({ error: 'Contacto no encontrado' });
+    }
+
+    const ops = await Operation.find({ contact: req.params.id })
+      .sort({ createdAt: -1 });
+    res.json(ops);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener el historial de operaciones' });
+  }
 });
 
 // 7. GET /api/contacts/:id/export – exportar CSV con filtro de fechas
 router.get('/:id/export', async (req, res) => {
-  const { start, end } = req.query;
-  const filter: any = { contact: req.params.id };
+  try {
+    const { start, end } = req.query;
+    
+    // Verificar que el contacto existe
+    const contact = await Contact.findById(req.params.id);
+    if (!contact) {
+      return res.status(404).json({ error: 'Contacto no encontrado' });
+    }
 
-  if (start !== 'undefined' && start !== '') filter.createdAt = { ...filter.createdAt, $gte: new Date(start as string) };
-  if (end   !== 'undefined' && end   !== '') filter.createdAt = { ...filter.createdAt, $lte: new Date(end   as string) };
+    const filter: any = { contact: req.params.id };
 
-  const ops = await Operation.find(filter).sort({ createdAt: -1 });
-  const { Parser } = await import('json2csv');
-  const csv = new Parser({ fields: ['createdAt', 'type', 'amount', 'balanceAfter'] }).parse(ops);
+    // Filtrar por fechas si se proporcionan
+    if (start && start !== 'undefined' && start !== '') {
+      const startDate = new Date(start as string);
+      if (isNaN(startDate.getTime())) {
+        return res.status(400).json({ error: 'Fecha de inicio inválida' });
+      }
+      filter.createdAt = { ...filter.createdAt, $gte: startDate };
+    }
+    
+    if (end && end !== 'undefined' && end !== '') {
+      const endDate = new Date(end as string);
+      if (isNaN(endDate.getTime())) {
+        return res.status(400).json({ error: 'Fecha de fin inválida' });
+      }
+      filter.createdAt = { ...filter.createdAt, $lte: endDate };
+    }
 
-  const contact = await Contact.findById(req.params.id);
-  const filename = `${contact?.name || 'contact'}_${start || 'inicio'}_${end || 'now'}.csv`;
+    const ops = await Operation.find(filter).sort({ createdAt: -1 });
+    
+    // Interfaz para tipado del CSV
+    interface CSVOperation {
+      createdAt: Date;
+      type: string;
+      amount: number;
+      balanceAfter: number;
+    }
 
-  res.header('Content-Type', 'text/csv');
-  res.attachment(filename);
-  res.send(csv);
+    const { Parser } = await import('json2csv');
+    const csv = new Parser({ 
+      fields: [
+        { 
+          label: 'Fecha y Hora', 
+          value: (row: CSVOperation) => new Date(row.createdAt).toLocaleString() 
+        },
+        { 
+          label: 'Tipo', 
+          value: (row: CSVOperation) => row.type === 'credit' ? 'Ingreso' : 'Retiro' 
+        },
+        { 
+          label: 'Monto', 
+          value: (row: CSVOperation) => row.amount > 0 
+            ? `+$${Math.abs(row.amount).toFixed(2)}` 
+            : `-$${Math.abs(row.amount).toFixed(2)}` 
+        },
+        { 
+          label: 'Balance Posterior', 
+          value: (row: CSVOperation) => `$${row.balanceAfter.toFixed(2)}` 
+        }
+      ] 
+    }).parse(ops);
+
+    const filename = `operaciones_${contact.name}_${start || 'inicio'}_${end || 'actual'}.csv`;
+
+    res.header('Content-Type', 'text/csv');
+    res.attachment(filename);
+    res.send(csv);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al exportar operaciones' });
+  }
 });
 
-// Exportar como exportación nombrada
 export { router as contactRoutes };
