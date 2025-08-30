@@ -60,8 +60,12 @@ export default function ContactsPage() {
 
   const handleOperation = async (type: 'credit' | 'debit', amount: number) => {
     if (!selectedContact) return;
+    
     try {
-      await api.post(`/contacts/${selectedContact._id}/operations`, { type, amount });
+      await api.post(`/contacts/${selectedContact._id}/operations`, { 
+        type, // ✅ Ahora envía directamente 'credit' o 'debit'
+        amount 
+      });
       mutate();
       setShowOperationModal(false);
       showSuccess(
@@ -232,40 +236,53 @@ export default function ContactsPage() {
         />
       )}
 
-      {/* Modal para historial de operaciones */}
+      {/* Modal para historial de operaciones (DIRECTO) */}
       {showOperationsHistory && selectedContact && (
         <div className="modal-overlay">
           <div className="modal modal-large">
-            <h2>Historial de Operaciones - {selectedContact.name}</h2>
             
-            <div className="balance-summary">
-              <p><strong>Balance actual:</strong> ${selectedContact.balance.toFixed(2)}</p>
-              <p><strong>Total operaciones:</strong> {operations.length}</p>
+            {/* Header centrado */}
+            <div className="modal-header-historial">
+              <h2>Historial de Operaciones - {selectedContact.name}</h2>
+              <button className="btn-close" onClick={() => setShowOperationsHistory(false)}>×</button>
             </div>
 
-            <div className="operations-list">
-              {operations.length === 0 ? (
-                <p className="empty-history">No hay operaciones registradas</p>
-              ) : (
-                operations.map(operation => (
-                  <div key={operation._id} className="operation-item">
-                    <span className="operation-date">
-                      {new Date(operation.createdAt).toLocaleDateString()} {new Date(operation.createdAt).toLocaleTimeString()}
-                    </span>
-                    <span className={`operation-type ${operation.type === 'credit' ? 'add' : 'subtract'}`}>
-                      {operation.type === 'credit' ? '➕ Ingreso' : '➖ Retiro'}
-                    </span>
-                    <span className={`operation-amount ${operation.type === 'credit' ? 'add' : 'subtract'}`}>
-                      {operation.type === 'credit' ? '+' : '-'}${Math.abs(operation.amount).toFixed(2)}
-                    </span>
-                    <span className="operation-balance">
-                      Balance: ${operation.balanceAfter.toFixed(2)}
-                    </span>
-                  </div>
-                ))
-              )}
+            {/* Contenido */}
+            <div className="modal-content-historial">
+              
+              {/* Resumen de balance */}
+              <div className="balance-summary">
+                <p><strong>Balance actual:</strong> ${selectedContact.balance.toFixed(2)}</p>
+                <p><strong>Total operaciones:</strong> {operations.length}</p>
+              </div>
+
+              {/* Lista de operaciones */}
+              <div className="operations-list">
+                {operations.length === 0 ? (
+                  <p className="empty-history">No hay operaciones registradas</p>
+                ) : (
+                  operations.map(operation => (
+                    <div key={operation._id} className="operation-item">
+                      <span className="operation-date">
+                        {new Date(operation.createdAt).toLocaleDateString()} {new Date(operation.createdAt).toLocaleTimeString()}
+                      </span>
+                      <span className={`operation-type ${operation.type === 'credit' ? 'add' : 'subtract'}`}>
+                        {operation.type === 'credit' ? '➕ Ingreso' : '➖ Retiro'}
+                      </span>
+                      <span className={`operation-amount ${operation.type === 'credit' ? 'add' : 'subtract'}`}>
+                        {operation.type === 'credit' ? '+' : '-'}${Math.abs(operation.amount).toFixed(2)}
+                      </span>
+                      <span className="operation-balance">
+                        Balance: ${operation.balanceAfter.toFixed(2)}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+
             </div>
 
+            {/* Footer */}
             <div className="form-actions">
               <button 
                 onClick={() => setShowOperationsHistory(false)} 
@@ -274,6 +291,7 @@ export default function ContactsPage() {
                 Cerrar
               </button>
             </div>
+
           </div>
         </div>
       )}

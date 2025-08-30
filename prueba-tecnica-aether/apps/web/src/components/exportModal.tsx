@@ -2,28 +2,37 @@ import React, { useState } from 'react';
 import { Contact } from '../types';
 
 interface ExportModalProps {
-  contact?: Contact;
+  contact: Contact;
   onExport: (startDate?: string, endDate?: string) => void;
   onCancel: () => void;
 }
 
-export default function ExportModal({ contact, onExport, onCancel }: ExportModalProps) {
+const ExportModal: React.FC<ExportModalProps> = ({
+  contact,
+  onExport,
+  onCancel
+}) => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [noStartDate, setNoStartDate] = useState(false);
-  const [useCurrentEndDate, setUseCurrentEndDate] = useState(false);
+  const [useCurrentEndDate, setUseCurrentEndDate] = useState(true);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onExport(noStartDate ? undefined : startDate, useCurrentEndDate ? undefined : endDate);
+    
+    const finalStartDate = noStartDate ? undefined : startDate;
+    const finalEndDate = useCurrentEndDate ? undefined : endDate;
+    
+    onExport(finalStartDate, finalEndDate);
   };
 
   return (
-    <div className="modal">
-      <div className="modal-content">
-        <h2>Exportar Transacciones {contact ? `de ${contact.name}` : ''}</h2>
-        <form onSubmit={handleSubmit}>
-          <div>
+    <div className="modal-overlay">
+      <div className="modal">
+        <h2>Exportar Operaciones - {contact.name}</h2>
+        
+        <form onSubmit={handleSubmit} className="form">
+          <div className="form-group">
             <label>
               <input
                 type="checkbox"
@@ -33,17 +42,20 @@ export default function ExportModal({ contact, onExport, onCancel }: ExportModal
               Desde el inicio
             </label>
           </div>
+
           {!noStartDate && (
-            <div>
-              <label>Fecha inicio:</label>
+            <div className="form-group">
+              <label>Fecha de inicio:</label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
+                className="form-input"
               />
             </div>
           )}
-          <div>
+
+          <div className="form-group">
             <label>
               <input
                 type="checkbox"
@@ -53,22 +65,31 @@ export default function ExportModal({ contact, onExport, onCancel }: ExportModal
               Hasta la fecha actual
             </label>
           </div>
+
           {!useCurrentEndDate && (
-            <div>
-              <label>Fecha fin:</label>
+            <div className="form-group">
+              <label>Fecha de fin:</label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                className="form-input"
               />
             </div>
           )}
-          <div className="modal-actions">
-            <button type="button" onClick={onCancel}>Cancelar</button>
-            <button type="submit">Exportar CSV</button>
+
+          <div className="form-actions">
+            <button type="button" onClick={onCancel} className="btn btn-secondary">
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn-primary">
+              Exportar CSV
+            </button>
           </div>
         </form>
       </div>
     </div>
   );
-}
+};
+
+export default ExportModal;

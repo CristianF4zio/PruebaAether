@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Contact } from '../types';
 
-// Define las props que recibe el componente
 interface ContactFormProps {
   onSubmit: (data: { name: string; email: string }) => void;
   onCancel: () => void;
@@ -63,7 +62,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
 
           {!isEditing && (
             <div className="form-note">
-              <p>💡 El balance inicial será $0</p>
+              <p>El balance inicial será $0.00</p>
             </div>
           )}
 

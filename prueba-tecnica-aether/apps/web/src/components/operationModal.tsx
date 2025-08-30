@@ -15,12 +15,10 @@ const OperationModal: React.FC<OperationModalProps> = ({
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<'credit' | 'debit'>('credit');
   const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setSuccessMessage('');
 
     const numericAmount = parseFloat(amount);
     if (isNaN(numericAmount) || numericAmount <= 0) {
@@ -33,13 +31,6 @@ const OperationModal: React.FC<OperationModalProps> = ({
       return;
     }
 
-    setSuccessMessage(
-      type === 'credit' 
-        ? `¡Ingreso de $${numericAmount.toFixed(2)} realizado con éxito!`
-        : `¡Retiro de $${numericAmount.toFixed(2)} realizado con éxito!`
-    );
-
-    // Ejecutamos la operación normalmente
     onSubmit(type, numericAmount);
   };
 
@@ -61,13 +52,6 @@ const OperationModal: React.FC<OperationModalProps> = ({
           <p><strong>Balance actual:</strong> ${contact.balance.toFixed(2)}</p>
           <p><strong>Nuevo balance:</strong> ${calculateNewBalance().toFixed(2)}</p>
         </div>
-
-        {/* Mensaje de éxito */}
-        {successMessage && (
-          <div className="success-message">
-            {successMessage}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="form">
           <div className="form-group">
