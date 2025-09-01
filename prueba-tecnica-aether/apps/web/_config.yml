@@ -1,0 +1,31 @@
+# _config.yml para GitHub Pages / Jekyll
+
+# Carpeta de origen de tu web (donde está tu index.html / assets)
+source: apps/web
+
+# Carpeta de destino donde se genera el sitio estático
+destination: _site
+
+# Ignorar archivos y carpetas innecesarias
+exclude:
+  - node_modules
+  - apps/api/node_modules
+  - apps/web/node_modules
+  - vendor
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - CHANGELOG.md
+
+# Configuración de tema (opcional)
+theme: jekyll-theme-primer
+
+# Configuración de plugins (solo si los usas)
+plugins:
+  - jekyll-seo-tag
+  - jekyll-feed
+  - jekyll-sitemap
+
+# Evitar procesar archivos ocultos
+keep_files:
+  - ".gitignore"
