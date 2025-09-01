@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IOperation extends Document {
   contact: mongoose.Types.ObjectId;
-  type: 'credit' | 'debit'; // ✅ Cambiado de 'add' | 'subtract' a 'credit' | 'debit'
+  type: 'credit' | 'debit'; // Cambiado de 'add' | 'subtract' a 'credit' | 'debit'
   amount: number;
   balanceAfter: number;
   createdAt: Date;
@@ -16,7 +16,7 @@ const OperationSchema: Schema = new Schema({
   },
   type: { 
     type: String, 
-    enum: ['credit', 'debit'], // ✅ Cambiado de ['add', 'subtract'] a ['credit', 'debit']
+    enum: ['credit', 'debit'], 
     required: true 
   },
   amount: { 

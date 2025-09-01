@@ -7,35 +7,42 @@ import OperationModal from '../components/operationModal';
 import ExportModal from '../components/exportModal';
 import ContactProfile from '../components/contactProfile';
 
+// Función fetcher usada por SWR para obtener datos desde la API
 const fetcher = (url: string) => api.get(url).then(r => r.data);
 
 export default function ContactsPage() {
+  // SWR para obtener la lista de contactos y mutar (refrescar) los datos
   const { data: contacts, mutate } = useSWR<Contact[]>('/contacts', fetcher);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const [showContactForm, setShowContactForm] = useState(false);
-  const [showOperationModal, setShowOperationModal] = useState(false);
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [editingContact, setEditingContact] = useState<Contact | null>(null);
-  const [showOperationsHistory, setShowOperationsHistory] = useState(false);
-  const [showContactProfile, setShowContactProfile] = useState(false);
-  const [operations, setOperations] = useState<Operation[]>([]);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
 
+  // Estados principales de la vista
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null); // Contacto seleccionado
+  const [showContactForm, setShowContactForm] = useState(false); // Modal de creación de contacto
+  const [showOperationModal, setShowOperationModal] = useState(false); // Modal de operaciones
+  const [showExportModal, setShowExportModal] = useState(false); // Modal de exportación
+  const [editingContact, setEditingContact] = useState<Contact | null>(null); // Contacto en edición
+  const [showOperationsHistory, setShowOperationsHistory] = useState(false); // Modal de historial
+  const [showContactProfile, setShowContactProfile] = useState(false); // Modal de perfil de contacto
+  const [operations, setOperations] = useState<Operation[]>([]); // Historial de operaciones cargadas
+  const [errorMessage, setErrorMessage] = useState(''); // Mensaje de error
+  const [successMessage, setSuccessMessage] = useState(''); // Mensaje de éxito
+
+  // Función para mostrar errores con tiempo de desaparición
   const showError = (message: string) => {
     setErrorMessage(message);
     setTimeout(() => setErrorMessage(''), 5000);
   };
 
+  // Función para mostrar mensajes de éxito con tiempo de desaparición
   const showSuccess = (message: string) => {
     setSuccessMessage(message);
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
+  // Crear un nuevo contacto
   const handleCreateContact = async (data: { name: string; email: string }) => {
     try {
       await api.post('/contacts', data);
-      mutate();
+      mutate(); // Refresca lista de contactos
       setShowContactForm(false);
       showSuccess('Contacto creado exitosamente');
     } catch (error) {
@@ -44,6 +51,7 @@ export default function ContactsPage() {
     }
   };
 
+  // Editar un contacto existente
   const handleEditContact = async (data: { name: string; email: string }) => {
     if (!editingContact) return;
     
@@ -58,12 +66,13 @@ export default function ContactsPage() {
     }
   };
 
+  // Realizar una operación de ingreso o retiro
   const handleOperation = async (type: 'credit' | 'debit', amount: number) => {
     if (!selectedContact) return;
     
     try {
       await api.post(`/contacts/${selectedContact._id}/operations`, { 
-        type, // ✅ Ahora envía directamente 'credit' o 'debit'
+        type, 
         amount 
       });
       mutate();
@@ -79,17 +88,20 @@ export default function ContactsPage() {
     }
   };
 
+  // Exportar operaciones de un contacto
   const handleExport = (startDate?: string, endDate?: string) => {
     if (!selectedContact) return;
     const params = new URLSearchParams();
     if (startDate) params.append('start', startDate);
     if (endDate) params.append('end', endDate);
     
+    // Abre en nueva pestaña el archivo exportado
     window.open(`http://localhost:5004/api/contacts/${selectedContact._id}/export?${params.toString()}`, '_blank');
     setShowExportModal(false);
     showSuccess('Exportación iniciada');
   };
 
+  // Cargar historial de operaciones de un contacto
   const loadOperationsHistory = async (contactId: string) => {
     try {
       const response = await api.get(`/contacts/${contactId}/operations`);
@@ -101,6 +113,7 @@ export default function ContactsPage() {
     }
   };
 
+  // Mostrar el perfil detallado de un contacto
   const handleShowProfile = async (contact: Contact) => {
     setSelectedContact(contact);
     try {
@@ -113,6 +126,7 @@ export default function ContactsPage() {
     }
   };
 
+  // Renderizado principal
   return (
     <div className="container">
       <h1>Lista de Contactos</h1>
@@ -129,10 +143,12 @@ export default function ContactsPage() {
         </div>
       )}
 
+      {/* Botón para crear nuevo contacto */}
       <button onClick={() => setShowContactForm(true)} className="btn btn-primary1">
         ＋ Nuevo Contacto
       </button>
 
+      {/* Listado de contactos */}
       <div className="contacts-grid">
         {contacts?.length === 0 ? (
           <div className="empty-state">
@@ -154,12 +170,14 @@ export default function ContactsPage() {
               </div>
               
               <div className="contact-actions">
+                {/* Botón para editar */}
                 <button 
                   onClick={() => setEditingContact(contact)}
                   className="btn btn-secondary"
                 >
                   Editar
                 </button>
+                {/* Botón para abrir operaciones */}
                 <button 
                   onClick={() => {
                     setSelectedContact(contact);
@@ -169,12 +187,14 @@ export default function ContactsPage() {
                 >
                   Operación
                 </button>
+                {/* Botón para mostrar perfil */}
                 <button 
                   onClick={() => handleShowProfile(contact)}
                   className="btn btn-info"
                 >
                   Perfil
                 </button>
+                {/* Botón para historial */}
                 <button 
                   onClick={() => {
                     setSelectedContact(contact);
@@ -184,6 +204,7 @@ export default function ContactsPage() {
                 >
                   Historial
                 </button>
+                {/* Botón para exportar */}
                 <button 
                   onClick={() => {
                     setSelectedContact(contact);
@@ -236,21 +257,21 @@ export default function ContactsPage() {
         />
       )}
 
-      {/* Modal para historial de operaciones (DIRECTO) */}
+      {/* Modal para historial de operaciones */}
       {showOperationsHistory && selectedContact && (
         <div className="modal-overlay">
           <div className="modal modal-large">
             
-            {/* Header centrado */}
+            {/* Encabezado */}
             <div className="modal-header-historial">
               <h2>Historial de Operaciones - {selectedContact.name}</h2>
               <button className="btn-close" onClick={() => setShowOperationsHistory(false)}>×</button>
             </div>
 
-            {/* Contenido */}
+            {/* Contenido del historial */}
             <div className="modal-content-historial">
               
-              {/* Resumen de balance */}
+              {/* Resumen */}
               <div className="balance-summary">
                 <p><strong>Balance actual:</strong> ${selectedContact.balance.toFixed(2)}</p>
                 <p><strong>Total operaciones:</strong> {operations.length}</p>

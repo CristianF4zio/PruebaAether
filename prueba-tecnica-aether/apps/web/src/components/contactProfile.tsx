@@ -1,58 +1,59 @@
-import React from 'react';
-import { Contact, Operation } from '../types';
+import React from 'react'; 
+import { Contact, Operation } from '../types';  
 
-interface ContactProfileProps {
-  contact: Contact;
-  operations: Operation[];
-  onClose: () => void;
-  onEdit: () => void;
-  onOperation: () => void;
-  onExport: () => void;
-}
+// Función auxiliar: recibe un número y devuelve solo la parte entera como string
+const fmt = (n: number) => Math.trunc(n).toString();  
 
-const ContactProfile: React.FC<ContactProfileProps> = ({
-  contact,
-  operations,
-  onClose,
-  onEdit,
-  onOperation,
-  onExport
-}) => {
-  // Calcular totales
+// Props que recibe el componente ContactProfile
+interface ContactProfileProps {   
+  contact: Contact;            // Información del contacto (nombre, email, balance, fecha de creación, etc.)
+  operations: Operation[];     // Lista de operaciones (ingresos, retiros, etc.)
+  onClose: () => void;         // Función para cerrar el modal
+  onEdit: () => void;          // Función para editar información del contacto
+  onOperation: () => void;     // Función para registrar una nueva operación
+  onExport: () => void;        // Función para exportar las operaciones a CSV
+}  
+
+// Componente principal que recibe props
+const ContactProfile: React.FC<ContactProfileProps> = ({   
+  contact,   
+  operations,   
+  onClose,   
+  onEdit,   
+  onOperation,   
+  onExport 
+}) => {   
+
+  // Cálculo del total de ingresos (credit)
   const totalIngresos = operations
-    .filter(op => op.type === 'credit')
-    .reduce((sum, op) => sum + Math.abs(op.amount), 0);
+    .filter(op => op.type === 'credit')                 // Filtra operaciones tipo ingreso
+    .reduce((sum, op) => sum + Math.trunc(op.amount), 0); // Suma los montos truncados
 
+  // Cálculo del total de retiros (debit)
   const totalRetiros = operations
-    .filter(op => op.type === 'debit')
-    .reduce((sum, op) => sum + Math.abs(op.amount), 0);
+    .filter(op => op.type === 'debit')                  // Filtra operaciones tipo retiro
+    .reduce((sum, op) => sum + Math.trunc(op.amount), 0);
 
-  // Formatear fecha de creación
-  const formatMemberSince = () => {
-    if (!contact.createdAt) return 'Fecha no disponible';
-    
-    const date = new Date(contact.createdAt);
-    return date.toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  // Formatea la fecha de creación del contacto
+  const formatMemberSince = () =>
+    contact.createdAt
+      ? new Date(contact.createdAt).toLocaleDateString('es-ES') // Convierte fecha al formato español
+      : 'Fecha no disponible';
 
   return (
     <div className="modal-overlay">
       <div className="modal modal-large">
         
-        {/* Header fijo */}
+        {/* Header con título y botón para cerrar */}
         <div className="profile-header">
           <h2>Perfil de {contact.name}</h2>
           <button className="btn-close" onClick={onClose}>×</button>
         </div>
 
-        {/* Contenido scrolleable */}
+        {/* Contenido scrollable */}
         <div className="profile-content">
           
-          {/* Info de contacto */}
+          {/* Tarjeta con datos principales del contacto */}
           <div className="contact-info-card">
             <div className="info-grid">
               <div className="info-item">
@@ -65,7 +66,7 @@ const ContactProfile: React.FC<ContactProfileProps> = ({
               </div>
               <div className="info-item">
                 <label>BALANCE ACTUAL</label>
-                <span className="balance-highlight">${contact.balance.toFixed(2)}</span>
+                <span className="balance-highlight">${fmt(contact.balance)}</span>
               </div>
               <div className="info-item">
                 <label>MIEMBRO DESDE</label>
@@ -82,22 +83,22 @@ const ContactProfile: React.FC<ContactProfileProps> = ({
             </div>
             <div className="summary-card">
               <h4>TOTAL INGRESOS</h4>
-              <div className="summary-positive">+${totalIngresos.toFixed(2)}</div>
+              <div className="summary-positive">+${fmt(totalIngresos)}</div>
             </div>
             <div className="summary-card">
               <h4>TOTAL RETIROS</h4>
-              <div className="summary-negative">-${totalRetiros.toFixed(2)}</div>
+              <div className="summary-negative">-${fmt(totalRetiros)}</div>
             </div>
           </div>
 
-          {/* Botones de acción */}
+          {/* Botones rápidos de acción */}
           <div className="quick-actions">
             <button onClick={onEdit} className="btn btn-secondary">Editar</button>
             <button onClick={onOperation} className="btn btn-primary">Nueva Operación</button>
             <button onClick={onExport} className="btn btn-warning">Exportar CSV</button>
           </div>
 
-          {/* Historial de operaciones */}
+          {/* Tabla de historial de operaciones */}
           <div className="operations-section">
             <h3>Historial de Operaciones</h3>
             <div className="operations-table-container">
@@ -112,24 +113,26 @@ const ContactProfile: React.FC<ContactProfileProps> = ({
                 </thead>
                 <tbody>
                   {operations.length === 0 ? (
+                    // Si no hay operaciones, muestra mensaje vacío
                     <tr>
                       <td colSpan={4} className="empty-table">
                         No hay operaciones registradas
                       </td>
                     </tr>
                   ) : (
-                    operations.map(operation => (
-                      <tr key={operation._id} className="operation-row">
-                        <td>{new Date(operation.createdAt).toLocaleString()}</td>
+                    // Si hay operaciones, las lista
+                    operations.map(op => (
+                      <tr key={op._id} className="operation-row">
+                        <td>{new Date(op.createdAt).toLocaleString()}</td>
                         <td>
-                          <span className={`operation-badge ${operation.type === 'credit' ? 'add' : 'subtract'}`}>
-                            {operation.type === 'credit' ? 'Ingreso' : 'Retiro'}
+                          <span className={`operation-badge ${op.type === 'credit' ? 'add' : 'subtract'}`}>
+                            {op.type === 'credit' ? 'Ingreso' : 'Retiro'}
                           </span>
                         </td>
-                        <td className={operation.type === 'credit' ? 'add' : 'subtract'}>
-                          {operation.type === 'credit' ? '+' : '-'}${Math.abs(operation.amount).toFixed(2)}
+                        <td className={op.type === 'credit' ? 'add' : 'subtract'}>
+                          {op.type === 'credit' ? '+' : '-'}${fmt(Math.abs(op.amount))}
                         </td>
-                        <td>${operation.balanceAfter.toFixed(2)}</td>
+                        <td>${fmt(op.balanceAfter)}</td>
                       </tr>
                     ))
                   )}
@@ -137,14 +140,12 @@ const ContactProfile: React.FC<ContactProfileProps> = ({
               </table>
             </div>
           </div>
-
         </div>
 
-        {/* Footer fijo */}
+        {/* Footer fijo con botón de cerrar */}
         <div className="form-actions">
           <button onClick={onClose} className="btn btn-secondary">Cerrar</button>
         </div>
-
       </div>
     </div>
   );

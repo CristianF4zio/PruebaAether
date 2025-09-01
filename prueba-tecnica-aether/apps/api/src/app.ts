@@ -10,7 +10,6 @@ app.use(express.json());
 // ¡ESTA LÍNEA ES CRUCIAL!
 app.use('/api/contacts', contactRoutes);
 
-// Ruta de salud para probar
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'OK', message: 'API funcionando correctamente' });
 });

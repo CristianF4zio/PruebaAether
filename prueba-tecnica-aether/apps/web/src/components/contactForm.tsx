@@ -14,9 +14,11 @@ const ContactForm: React.FC<ContactFormProps> = ({
   onCancel, 
   isEditing = false 
 }) => {
+  // Estado local para los campos del formulario
   const [name, setName] = useState(contact?.name || '');
   const [email, setEmail] = useState(contact?.email || '');
 
+  // Si se recibe un contacto, se cargan sus datos en los inputs
   useEffect(() => {
     if (contact) {
       setName(contact.name);
@@ -24,6 +26,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
     }
   }, [contact]);
 
+  // Envía los datos del formulario al componente padre
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({ name, email });
@@ -35,6 +38,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
         <h2>{isEditing ? 'Editar Contacto' : 'Crear Contacto'}</h2>
         
         <form onSubmit={handleSubmit} className="form">
+          {/* Campo nombre */}
           <div className="form-group">
             <label htmlFor="name">Nombre:</label>
             <input
@@ -47,6 +51,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
             />
           </div>
 
+          {/* Campo email (bloqueado si edita) */}
           <div className="form-group">
             <label htmlFor="email">Email:</label>
             <input
@@ -60,12 +65,14 @@ const ContactForm: React.FC<ContactFormProps> = ({
             />
           </div>
 
+          {/* Nota solo al crear */}
           {!isEditing && (
             <div className="form-note">
               <p>El balance inicial será $0.00</p>
             </div>
           )}
 
+          {/* Botones de acción */}
           <div className="form-actions">
             <button type="button" onClick={onCancel} className="btn btn-secondary">
               Cancelar
