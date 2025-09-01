@@ -4,6 +4,7 @@ export interface Contact {
   name: string;
   balance: number;
   createdAt: string;
+   updatedAt: string;
 }
 
 export interface Operation {
@@ -14,3 +15,4 @@ export interface Operation {
   balanceAfter: number;
   createdAt: string;
 }
+

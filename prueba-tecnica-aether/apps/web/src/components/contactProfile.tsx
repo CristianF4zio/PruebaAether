@@ -27,6 +27,18 @@ const ContactProfile: React.FC<ContactProfileProps> = ({
     .filter(op => op.type === 'debit')
     .reduce((sum, op) => sum + Math.abs(op.amount), 0);
 
+  // Formatear fecha de creación
+  const formatMemberSince = () => {
+    if (!contact.createdAt) return 'Fecha no disponible';
+    
+    const date = new Date(contact.createdAt);
+    return date.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   return (
     <div className="modal-overlay">
       <div className="modal modal-large">
@@ -44,19 +56,20 @@ const ContactProfile: React.FC<ContactProfileProps> = ({
           <div className="contact-info-card">
             <div className="info-grid">
               <div className="info-item">
-                <label>Nombre</label>
+                <label>NOMBRE</label>
                 <span>{contact.name}</span>
               </div>
               <div className="info-item">
-                <label>Email</label>
+                <label>EMAIL</label>
                 <span>{contact.email}</span>
               </div>
               <div className="info-item">
-                <label>Balance Actual</label>
+                <label>BALANCE ACTUAL</label>
                 <span className="balance-highlight">${contact.balance.toFixed(2)}</span>
               </div>
               <div className="info-item">
-                <label>Miembro desde</label>
+                <label>MIEMBRO DESDE</label>
+                <span>{formatMemberSince()}</span>
               </div>
             </div>
           </div>
@@ -64,15 +77,15 @@ const ContactProfile: React.FC<ContactProfileProps> = ({
           {/* Resumen de operaciones */}
           <div className="operations-summary">
             <div className="summary-card">
-              <h4>Total Operaciones</h4>
+              <h4>TOTAL OPERACIONES</h4>
               <div className="summary-number">{operations.length}</div>
             </div>
             <div className="summary-card">
-              <h4>Total Ingresos</h4>
+              <h4>TOTAL INGRESOS</h4>
               <div className="summary-positive">+${totalIngresos.toFixed(2)}</div>
             </div>
             <div className="summary-card">
-              <h4>Total Retiros</h4>
+              <h4>TOTAL RETIROS</h4>
               <div className="summary-negative">-${totalRetiros.toFixed(2)}</div>
             </div>
           </div>

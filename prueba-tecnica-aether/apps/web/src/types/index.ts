@@ -16,3 +16,4 @@ export interface Operation {
   balanceAfter: number;      
   createdAt: string;
 }
+

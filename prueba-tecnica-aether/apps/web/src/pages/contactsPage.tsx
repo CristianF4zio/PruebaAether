@@ -115,7 +115,7 @@ export default function ContactsPage() {
 
   return (
     <div className="container">
-      <h1>Contactos</h1>
+      <h1>Lista de Contactos</h1>
       
       {/* Mensajes de éxito y error */}
       {successMessage && (
@@ -129,7 +129,7 @@ export default function ContactsPage() {
         </div>
       )}
 
-      <button onClick={() => setShowContactForm(true)} className="btn btn-primary">
+      <button onClick={() => setShowContactForm(true)} className="btn btn-primary1">
         ＋ Nuevo Contacto
       </button>
 
@@ -173,7 +173,7 @@ export default function ContactsPage() {
                   onClick={() => handleShowProfile(contact)}
                   className="btn btn-info"
                 >
-                  👤 Perfil
+                  Perfil
                 </button>
                 <button 
                   onClick={() => {
